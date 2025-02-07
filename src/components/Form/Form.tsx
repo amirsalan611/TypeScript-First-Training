@@ -1,9 +1,21 @@
 import axios from "axios";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import Input from "../Shared/Input/Input";
 import Button from "../Shared/button/button";
 import TaskList from "../Task-List/TaskList";
+
+function reducerFn(state, action) {
+  switch (action.type) {
+    case "getData":
+      return action.payload;
+    case "addData":
+      return [...state, action.payload];
+
+    default:
+      break;
+  }
+}
 
 export default function Form() {
   const [newTask, setNewTask] = useState({
@@ -11,7 +23,8 @@ export default function Form() {
     taskDeadLine: "",
     taskStatus: "",
   });
-  const [tasks, setTasks] = useState([]);
+  // const [tasks, setTasks] = useState([]);
+  const [tasks, dispatch] = useReducer(reducerFn, []);
 
   useEffect(() => {
     async function getData() {
@@ -19,10 +32,11 @@ export default function Form() {
         `https://676d4ea00e299dd2ddff1999.mockapi.io/Tasks`
       );
       console.log(response);
-      setTasks(response.data);
+      // setTasks(response.data);
+      dispatch({ type: "getData", payload: response.data });
     }
     getData();
-  });
+  }, []);
 
   const btnHandler = async () => {
     const response = await axios.post(
@@ -33,6 +47,14 @@ export default function Form() {
         status: newTask.taskStatus,
       }
     );
+    console.log(response.data);
+    if (response.status === 201) {
+      dispatch({
+        type: "addData",
+        payload: response.data,
+      });
+    }
+
     toast.success("Task Added Successfully!");
     setNewTask({
       taskName: "",
